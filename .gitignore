@@ -2,3 +2,6 @@
 .vscode/
 .idea/
 *.swp
+.playwright-mcp/
+surgical_coding_agents/
+c3-*.png
