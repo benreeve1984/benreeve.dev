@@ -4,4 +4,5 @@
 *.swp
 .playwright-mcp/
 surgical_coding_agents/
-c3-*.png
+c[0-9]*.png
+toc-*.png

@@ -501,20 +501,21 @@
 
 <hr>
 
-<nav class="toc" aria-label="The eleven concepts">
-  <h3>The eleven concepts</h3>
+<nav class="toc" aria-label="The twelve concepts">
+  <h3>The twelve concepts</h3>
   <ol>
     <li><a href="#c1">Understand and align before you delegate</a></li>
-    <li><a href="#c2">Stay in the "smart zone"</a></li>
-    <li><a href="#c3">Keep tasks small and threads short</a></li>
-    <li><a href="#c4">Curate context: reference, don't paste; filter, don't dump</a></li>
-    <li><a href="#c5">Write durable context once (AGENTS.md)</a></li>
-    <li><a href="#c6">Let the agent write code, where it can</a></li>
-    <li><a href="#c7">Dial reasoning effort to difficulty</a></li>
-    <li><a href="#c8">Use subagents to protect the main thread</a></li>
-    <li><a href="#c9">Prove it works</a></li>
-    <li><a href="#c10">Compound your successes</a></li>
-    <li><a href="#c11">Watch the meter</a></li>
+    <li><a href="#c2">Bound the agent in the codebase, not just in the prompt</a></li>
+    <li><a href="#c3">Stay in the "smart zone"</a></li>
+    <li><a href="#c4">Keep tasks small and threads short</a></li>
+    <li><a href="#c5">Curate context: reference, don't paste; filter, don't dump</a></li>
+    <li><a href="#c6">Write durable context once (AGENTS.md)</a></li>
+    <li><a href="#c7">Let the agent write code, where it can</a></li>
+    <li><a href="#c8">Dial reasoning effort to difficulty</a></li>
+    <li><a href="#c9">Use subagents to protect the main thread</a></li>
+    <li><a href="#c10">Prove it works</a></li>
+    <li><a href="#c11">Compound your successes</a></li>
+    <li><a href="#c12">Watch the meter</a></li>
   </ol>
 </nav>
 
@@ -525,6 +526,7 @@
   <p>The biggest source of waste is delegating to an agent before you understand the problem. The agent produces a large, plausible diff but it doesn't solve the problem, or solves the wrong problem. You only spot this after reading it carefully or discover what it's doing during use &mdash; by which point the cheap part is done and the expensive part, rework, is starting.</p>
   <p>Spend the first few minutes letting the model teach you the unfamiliar part: a new library, a new API, the bits of the existing codebase you don't know. Understanding acquired <em>before</em> the agent starts is the cheapest you will get. Discovered mid-task, it is the most expensive.</p>
   <p>For anything ambiguous, get the agent to interview you first. As someone who is not a software engineer by training, I do this every time to solidify my own ideas, not just the agent's. Have it surface its assumptions and resolve open questions one at a time before it writes a spec for you. Misalignment caught after implementation is, by some distance, the most expensive kind of bug to fix. This does not require an elaborate prompt or skill &mdash; simply asking it to interview you and surface and resolve all assumptions systematically.</p>
+  <p>Where the change is consequential, or you are working in an area you don't know well, get a more experienced engineer to sanity-check the approach before the agent starts. The model is, uncomfortably, a mirror &mdash; it reflects back what you tell it, without the grounded perspective that an engineer who has lived in this code has. Three or four questions from someone senior can save a day of confidently-wrong agent work.</p>
 
   <figure class="visual">
     <svg viewBox="0 0 760 240" role="img" aria-hidden="true">
@@ -560,7 +562,58 @@
 </section>
 
 <section class="concept" id="c2">
-  <h2 class="concept-title"><span class="num">02</span> Stay in the smart zone</h2>
+  <h2 class="concept-title"><span class="num">02</span> Bound the agent in the codebase, not just in the prompt</h2>
+  <p>Every line of code the agent writes is a line that needs to be maintained, and maintenance is also expensive. The agent has no inbuilt incentive to stop. Left alone it will keep refactoring the same area, generalising for no real reason, and spreading a small change across more files than it needed to. The barriers that stop it have to be in the codebase, not just in the prompt.</p>
+  <p>Decide upfront what modules the change affects, what their interfaces are, and what is explicitly off-limits. Get the agent to interview you on the design before it touches anything &mdash; not just "what should this function do" but "what should this module own, and what should it not". You are trying to keep the changeset small by drawing boundaries the agent will stay inside, rather than by hoping it self-limits. A good test: if you cannot describe the change as "edits in module X, with the existing interface to Y", the scope is still too vague.</p>
+
+  <figure class="visual">
+    <svg viewBox="0 0 860 278" role="img" aria-hidden="true">
+      <g>
+        <!-- Row 1: without barriers. Box y=36, h=58, center y=65. Labels at y=58, sub at y=78. -->
+        <text x="20" y="22" fill="var(--muted)" font-size="11" letter-spacing="1.5">WITHOUT BARRIERS &mdash; A SMALL ASK, LARGE BLAST RADIUS</text>
+        <rect x="20" y="36" width="140" height="58" rx="8" fill="var(--panel-strong)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="90" y="58" text-anchor="middle" dominant-baseline="middle" font-size="11">auth</text>
+        <text x="90" y="78" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">untouched</text>
+        <rect x="170" y="36" width="140" height="58" rx="8" fill="var(--good-soft)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="240" y="58" text-anchor="middle" dominant-baseline="middle" font-size="11">billing</text>
+        <text x="240" y="78" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">target</text>
+        <rect x="320" y="36" width="140" height="58" rx="8" fill="var(--bad-soft)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="390" y="58" text-anchor="middle" dominant-baseline="middle" font-size="11">shared utils</text>
+        <text x="390" y="78" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">refactored</text>
+        <rect x="470" y="36" width="140" height="58" rx="8" fill="var(--bad-soft)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="540" y="58" text-anchor="middle" dominant-baseline="middle" font-size="11">ui</text>
+        <text x="540" y="78" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">generalised</text>
+        <rect x="620" y="36" width="140" height="58" rx="8" fill="var(--panel-strong)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="690" y="58" text-anchor="middle" dominant-baseline="middle" font-size="11">reports</text>
+        <text x="690" y="78" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">untouched</text>
+        <text x="20" y="116" fill="var(--muted)" font-size="11">A bug-fix in billing &mdash; agent also refactors shared utils and "tidies up" the UI on the way past.</text>
+
+        <!-- Row 2: with barriers. Box y=164, h=58, center y=193. Labels at y=186, sub at y=206. -->
+        <text x="20" y="150" fill="var(--muted)" font-size="11" letter-spacing="1.5">WITH BARRIERS &mdash; CHANGE STAYS INSIDE THE TARGET</text>
+        <rect x="20" y="164" width="140" height="58" rx="8" fill="var(--panel-strong)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="90" y="186" text-anchor="middle" dominant-baseline="middle" font-size="11">auth</text>
+        <text x="90" y="206" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">untouched</text>
+        <rect x="170" y="164" width="140" height="58" rx="8" fill="var(--good-soft)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="240" y="186" text-anchor="middle" dominant-baseline="middle" font-size="11">billing</text>
+        <text x="240" y="206" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">target</text>
+        <rect x="320" y="164" width="140" height="58" rx="8" fill="var(--panel-strong)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="390" y="186" text-anchor="middle" dominant-baseline="middle" font-size="11">shared utils</text>
+        <text x="390" y="206" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">untouched</text>
+        <rect x="470" y="164" width="140" height="58" rx="8" fill="var(--panel-strong)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="540" y="186" text-anchor="middle" dominant-baseline="middle" font-size="11">ui</text>
+        <text x="540" y="206" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">untouched</text>
+        <rect x="620" y="164" width="140" height="58" rx="8" fill="var(--panel-strong)" stroke="var(--rule-strong)" stroke-width="1"/>
+        <text x="690" y="186" text-anchor="middle" dominant-baseline="middle" font-size="11">reports</text>
+        <text x="690" y="206" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--muted)">untouched</text>
+        <text x="20" y="250" fill="var(--muted)" font-size="11">Same change, scoped to billing only &mdash; smaller diff, less to review, no surprises elsewhere.</text>
+      </g>
+    </svg>
+    <figcaption>The agent won't bound the work for you. Barriers belong in the codebase, not just in the prompt.</figcaption>
+  </figure>
+</section>
+
+<section class="concept" id="c3">
+  <h2 class="concept-title"><span class="num">03</span> Stay in the smart zone</h2>
   <p>Context windows are advertised in million-token round numbers, which is misleading for this kind of use. Models get measurably worse at cognitive tasks as the window fills, and the decline starts long before the context is "full." As of mid-2026, treat the first 100,000 tokens or so as the <strong>smart zone</strong>. Past that you pay twice: a larger input token bill on every turn, and worse reasoning and code.</p>
   <p>This might seem counter-intuitive, but a large context is not a sign that the model is being thorough. It is usually the model having to sift through lots of unhelpful sediment to find the bits you really want it to use and think about. The first practical step whenever a session starts to grow or feel sluggish is to ask: how full is the context, and how much of what is in there is still important? Should I clear it?</p>
 
@@ -618,8 +671,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c3">
-  <h2 class="concept-title"><span class="num">03</span> Keep tasks small, threads short</h2>
+<section class="concept" id="c4">
+  <h2 class="concept-title"><span class="num">04</span> Keep tasks small, threads short</h2>
   <p>Auto-compaction is still a bit of a sticking-plaster for real engineering work and a sign you are tackling too many things at once. A compacted thread carries sediment forward &mdash; introduces vague summaries and references to files that no longer matter to the work the agent is doing. A fresh thread starts from a clean state every time and lets you intentionally curate it with the context needed for the work you are doing.</p>
   <p>My rule is one thread per task, not one per project. When the task changes, clear the context yourself and re-seed it deliberately (details on <code>AGENTS.md</code> and skills to come in a moment). This sits in slight tension with OpenAI's guidance to stay in long threads to keep the reasoning trail. Restarting can be disorienting for users who haven't understood how the agent works but, once we've understood how context accumulates and how to add to it deliberately, clearing it ourselves frequently beats letting it auto-compact.</p>
   <p>If you cannot hold the task in your head, the model will run ahead of you and introduce things (rightly or wrongly) that you didn't intend. Break it down. Smaller tasks fit inside the smart zone naturally.</p>
@@ -682,8 +735,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c4">
-  <h2 class="concept-title"><span class="num">04</span> Curate context: reference, don't paste; filter, don't dump</h2>
+<section class="concept" id="c5">
+  <h2 class="concept-title"><span class="num">05</span> Curate context: reference, don't paste; filter, don't dump</h2>
   <p>The default failure mode is to give the agent too much for convenience. You paste a whole file when you only need a function from it. You paste a whole log when you only need the failing line. You enable a search tool and let it ingest twenty matches at full length when one would have been sufficient. Every unnecessary token has two costs: the API tokens on the meter, and the capacity it takes from the smart zone. Luckily agents are quite optimised for efficient searching, as long as you've given them enough context about what they are searching.</p>
   <p>Point at file paths instead of pasting their contents. Put long output through <code>head</code>, <code>tail</code> or <code>grep</code> before the model sees it. Tell the agent where to look so it doesn't search the whole tree on a guess. This is also why agents that can use <code>grep</code> and <code>glob</code> on text files are so much cheaper than the alternative &mdash; they read by reference and return only the relevant lines.</p>
 
@@ -720,8 +773,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c5">
-  <h2 class="concept-title"><span class="num">05</span> Write durable context once (<code>AGENTS.md</code>)</h2>
+<section class="concept" id="c6">
+  <h2 class="concept-title"><span class="num">06</span> Write durable context once (<code>AGENTS.md</code>)</h2>
   <p>Some context is durable. The repository layout. The build and test commands. The conventions you follow. What "done" means here. The two or three things you've learned the hard way in prior sessions that the agent must never do. This is the context that's required every time you clear the session, to avoid a scene from Memento, but you shouldn't re-type it.</p>
   <p>Put it in <code>AGENTS.md</code> at the repository root and the agent will load it automatically. Keep it short and accurate. Add a rule only after you've watched the agent make the same mistake twice &mdash; rules added on a hunch are noise and cost tokens in the smart zone. Don't waste tokens on things the model already knows how to do well.</p>
 
@@ -778,8 +831,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c6">
-  <h2 class="concept-title"><span class="num">06</span> Let the agent write code, where it can</h2>
+<section class="concept" id="c7">
+  <h2 class="concept-title"><span class="num">07</span> Let the agent write code, where it can</h2>
   <p>MCP servers (and tool registrations in general) have two hidden costs that catch people out.</p>
   <p>Every connected tool's definition sits in the context window <em>on every single call</em>. Wire up the big GitHub MCP and you've permanently added several tens of thousand tokens of schema to every prompt, whether you use those tools or not. Having lots of tools also makes the model worse at choosing between them.</p>
   <p>When an agent chains tool calls &mdash; tool A's output becomes tool B's input becomes tool C's input &mdash; the LLM's whole network runs at every step <em>just to copy the previous result into the next call</em>. At those hops the model isn't really reasoning; it is acting as an expensive courier between tools. LLMs are also far better at writing code than at issuing tool calls. Their training data is mostly code, with far less tool-call syntax.</p>
@@ -840,8 +893,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c7">
-  <h2 class="concept-title"><span class="num">07</span> Dial reasoning effort to difficulty</h2>
+<section class="concept" id="c8">
+  <h2 class="concept-title"><span class="num">08</span> Dial reasoning effort to difficulty</h2>
   <p>Modern models let you turn up the amount of "thinking" they do before answering. Extra-high reasoning is useful on hard problems &mdash; tracing a bug through three services, designing a tricky migration, comparing two architectures. On a well-scoped, well-understood task it is slower and more expensive for the same answer.</p>
   <p>Default to low or medium. Reach for high only when the task really needs it. Change the setting often and build a feel for the trade-off; the skill is noticing when a hard reasoning run pays for itself and when it doesn't.</p>
 
@@ -886,8 +939,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c8">
-  <h2 class="concept-title"><span class="num">08</span> Use subagents to protect the main thread</h2>
+<section class="concept" id="c9">
+  <h2 class="concept-title"><span class="num">09</span> Use subagents to protect the main thread</h2>
   <p>The cheapest way to protect a clean main context is to send the noisy work somewhere else. A subagent is a fresh copy of the agent with its own context window, given a narrow brief, that returns a short summary instead of a full transcript. Exploring an unfamiliar codebase, running a verbose test suite, scanning a large directory for a pattern &mdash; all of these are subagent work.</p>
   <p>Where the subagent is doing simple, well-scoped work, consider giving it a smaller and faster model &mdash; the cost saving is significant, and on bounded tasks the quality difference is often invisible. But don't go overboard. A swarm of specialist subagents adds coordination overhead that often outweighs the context you save. The point is to practice main agent context hygiene, not agentic org design.</p>
 
@@ -928,11 +981,12 @@
   </figure>
 </section>
 
-<section class="concept" id="c9">
-  <h2 class="concept-title"><span class="num">09</span> Prove it works</h2>
-  <p>An agent without a feedback loop is not writing code like an engineer &mdash; it is predicting if the code will work. So require evidence that the change works. But be careful with what counts as evidence: an agent that writes its own tests can produce passing tests that prove very little. Tests written by an agent need a second pair of eyes &mdash; yours &mdash; to confirm they exercise the behaviour you really want and cover edge cases, and not some weaker version.</p>
+<section class="concept" id="c10">
+  <h2 class="concept-title"><span class="num">10</span> Prove it works</h2>
+  <p>An agent without a feedback loop is not writing code like an engineer &mdash; it is predicting if the code will work. So require evidence that the change works. But be careful with what counts as evidence: an agent that writes its own tests can produce passing tests that prove very little. Tests written by an agent need a second pair of eyes &mdash; yours &mdash; to confirm they exercise the behaviour you really want and cover edge cases, and not some weaker version. Always read the tests in detail &mdash; especially if you are leaning on them to review the code in less detail. The less time you spend reading the implementation, the more weight the tests are carrying, and a test you haven't read carefully is not really proof of anything.</p>
   <p>Prefer test-first: write the failing test (or have the agent write it, then read it), confirm it fails for the right reason, then implement until it passes. That is what "red, green" means. Skipping the red step is the most common failure &mdash; without it, you risk a test that asserts nothing and would pass against almost any implementation, including the wrong one.</p>
   <p>Tests are necessary but not sufficient. Watch the change in action yourself wherever you can &mdash; click the button, run the workflow, check the output. This is also a reason to keep changes small. A massive diff cannot be verified end-to-end, and an agent rarely notices when a sweeping change has quietly broken or degraded something elsewhere. Smaller changes are easier to prove out, and easier to back out if they go wrong.</p>
+  <p>Don't lean only on tests, either. Deterministic tooling &mdash; linters, formatters, type checkers, static analysis &mdash; verifies deterministic properties more reliably than any agent will. Tell the agent not to worry about style and let the tooling enforce it; you free up its reasoning for the parts that actually need it.</p>
   <p>Deliver the diff with the evidence. The commands and their output. A short screen capture. A test that goes red, then green &mdash; and that you have read. Without that, your reviewer is doing the verification work for you, and you haven't really delegated to the agent. You've delegated to the reviewer.</p>
 
   <figure class="visual">
@@ -956,8 +1010,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c10">
-  <h2 class="concept-title"><span class="num">10</span> Compound your successes</h2>
+<section class="concept" id="c11">
+  <h2 class="concept-title"><span class="num">11</span> Compound your successes</h2>
   <p>The first time you solve something non-trivial with an agent, the figuring out costs real tokens and real time. The second time, that cost should be significantly smaller if you codify it. The way to do that is to capture the working pattern &mdash; as a script, a small wrapper, a <code>SKILL.md</code>, a section of <code>AGENTS.md</code>, a saved prompt. Re-inventing the same solution over many small loops is expensive because the cost is duplicated across many sessions, including where the steps sometimes go wrong.</p>
   <p>Also remove friction between the agent and the artefact it has to edit. If touching a PowerPoint deck requires the agent to install nine packages and write custom OOXML, every task involving that deck pays a significant overhead in commands and tokens. A thin wrapper or small script that lets the agent work on the artefact directly is a one-time investment that pays back across every future run.</p>
 
@@ -990,8 +1044,8 @@
   </figure>
 </section>
 
-<section class="concept" id="c11">
-  <h2 class="concept-title"><span class="num">11</span> Watch the meter</h2>
+<section class="concept" id="c12">
+  <h2 class="concept-title"><span class="num">12</span> Watch the meter</h2>
   <p>You cannot manage a number you never look at. Most coding agents bill by tokens rather than messages, and reasoning tokens also cost money, so only counting your turns tells you very little. Get into the habit of glancing at usage during sessions until you have a feel for what a task should cost. Then notice when a session is much more expensive than that, and ask why.</p>
   <p>Three panels are worth knowing in Codex specifically. The live ones tell you about <em>this</em> session; the dashboard tells you about <em>last week</em>.</p>
 
